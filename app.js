@@ -213,7 +213,11 @@ function showSuccess(data) {
     
     dom.registrationDetails.innerHTML = `
         <div class="detail-row">
-            <span class="detail-label">Name</span>
+            <span class="detail-label">Course</span>
+            <span class="detail-value">CCNA Certification</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Student Name</span>
             <span class="detail-value">${escapeHtml(data.full_name)}</span>
         </div>
         <div class="detail-row">
@@ -221,7 +225,7 @@ function showSuccess(data) {
             <span class="detail-value">${escapeHtml(data.email)}</span>
         </div>
         <div class="detail-row">
-            <span class="detail-label">Registered</span>
+            <span class="detail-label">Enrolled</span>
             <span class="detail-value">${new Date(data.created_at).toLocaleDateString()}</span>
         </div>
     `;
@@ -250,9 +254,9 @@ function getErrorMessage(error) {
     const code = error.code || '';
     
     if (code === '23505' || msg.includes('duplicate') || msg.includes('unique')) {
-        if (msg.includes('email')) return 'This email is already registered.';
-        if (msg.includes('full_name')) return 'This name is already taken.';
-        return 'Already registered with this information.';
+        if (msg.includes('email')) return 'This email is already enrolled in the CCNA course.';
+        if (msg.includes('full_name')) return 'This name is already registered for the course.';
+        return 'You are already enrolled in the CCNA course.';
     }
     
     if (msg.includes('Invalid login credentials') || msg.includes('Token has expired')) {
@@ -279,14 +283,44 @@ async function sendOtp() {
     setLoading(true);
     
     try {
-        const email = dom.email.value.trim().toLowerCase();
-        const name = dom.fullName.value.trim().replace(/\s+/g, ' ');
+        const email = sanitizeEmail(dom.email.value);
+        const name = sanitizeName(dom.fullName.value);
         
-        console.log('Sending OTP to:', email);
+        console.log('Checking if already registered...');
         
         // Normalize values
         dom.email.value = email;
         dom.fullName.value = name;
+        
+        // Check if email already registered
+        const { data: existingEmail } = await supabaseClient
+            .from('registrations')
+            .select('email')
+            .eq('email', email)
+            .maybeSingle();
+        
+        if (existingEmail) {
+            showToast('This email is already enrolled in the CCNA course!', 'error');
+            showFieldError('email', 'This email is already registered');
+            setLoading(false);
+            return;
+        }
+        
+        // Check if name already registered
+        const { data: existingName } = await supabaseClient
+            .from('registrations')
+            .select('full_name')
+            .ilike('full_name', name)
+            .maybeSingle();
+        
+        if (existingName) {
+            showToast('This name is already registered for the course!', 'error');
+            showFieldError('name', 'This name is already registered');
+            setLoading(false);
+            return;
+        }
+        
+        console.log('Sending OTP to:', email);
         
         const { data, error } = await supabaseClient.auth.signInWithOtp({
             email: email,
@@ -368,7 +402,7 @@ async function verifyAndRegister() {
         
         if (existing) {
             showSuccess(existing);
-            showToast('You are already registered!', 'success');
+            showToast('You are already enrolled in the CCNA course!', 'success');
             return;
         }
         
@@ -382,7 +416,7 @@ async function verifyAndRegister() {
         if (regError) throw regError;
         
         showSuccess(regData);
-        showToast('Registration successful!', 'success');
+        showToast('CCNA course registration successful!', 'success');
         
     } catch (error) {
         console.error('Verify error:', error);

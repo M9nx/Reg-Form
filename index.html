@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co; img-src 'self' data:; base-uri 'self'; form-action 'self';">
-    <title>Registration</title>
+    <title>CCNA Course Registration</title>
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -20,8 +20,16 @@
                         <path d="M12 20L18 26L28 14" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                 </div>
-                <h1>Create Account</h1>
-                <p class="subtitle">Register with your email address</p>
+                <h1>CCNA Course Registration</h1>
+                <p class="subtitle">Confirm your enrollment in the CCNA course</p>
+                <div class="warning-box">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                        <line x1="12" y1="9" x2="12" y2="13"></line>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                    <span>Use your active email only. You will receive important course updates.</span>
+                </div>
             </div>
             
             <!-- Registration Form -->
@@ -35,7 +43,7 @@
                             placeholder="Enter your full name"
                             autocomplete="name"
                         >
-                        <span class="field-hint">English letters only, 3-50 characters</span>
+                        <span class="field-hint">English letters only, use your real name as on your ID</span>
                         <span class="field-error" id="name-error"></span>
                     </div>
                     
@@ -47,6 +55,7 @@
                             placeholder="you@example.com"
                             autocomplete="email"
                         >
+                        <span class="field-hint warning">⚠️ Enter your active email - OTP code will be sent here</span>
                         <span class="field-error" id="email-error"></span>
                     </div>
                     
@@ -98,8 +107,8 @@
                             <path d="M14 24L22 32L34 18" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                     </div>
-                    <h2>You're Registered!</h2>
-                    <p class="subtitle">Your registration has been completed successfully.</p>
+                    <h2>Registration Confirmed!</h2>
+                    <p class="subtitle">You are now enrolled in the CCNA course. Check your email for course details.</p>
                     <div id="registration-details" class="details-card"></div>
                 </div>
             </div>
@@ -108,7 +117,7 @@
             <div id="toast" class="toast hidden"></div>
         </div>
         
-        <p class="footer-text">Secure registration powered by Supabase</p>
+        <p class="footer-text">CCNA Course Registration - Secure verification powered by Supabase</p>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
