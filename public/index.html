@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co; img-src 'self' data:; base-uri 'self'; form-action 'self';">
+    <title>Registration</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <div class="logo">
+                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                        <rect width="40" height="40" rx="10" fill="#6366f1"/>
+                        <path d="M12 20L18 26L28 14" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <h1>Create Account</h1>
+                <p class="subtitle">Register with your email address</p>
+            </div>
+            
+            <!-- Registration Form -->
+            <div id="step-form" class="step">
+                <form id="registration-form" method="POST" action="#">
+                    <div class="form-group">
+                        <label for="full-name">Full Name</label>
+                        <input 
+                            type="text" 
+                            id="full-name" 
+                            placeholder="Enter your full name"
+                            autocomplete="name"
+                        >
+                        <span class="field-hint">English letters only, 3-50 characters</span>
+                        <span class="field-error" id="name-error"></span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input 
+                            type="email" 
+                            id="email" 
+                            placeholder="you@example.com"
+                            autocomplete="email"
+                        >
+                        <span class="field-error" id="email-error"></span>
+                    </div>
+                    
+                    <!-- OTP Section -->
+                    <div id="otp-section" class="form-group otp-group hidden">
+                        <label for="otp">Verification Code</label>
+                        <div class="otp-wrapper">
+                            <input 
+                                type="text" 
+                                id="otp" 
+                                placeholder="00000000"
+                                maxlength="8"
+                                inputmode="numeric"
+                                autocomplete="one-time-code"
+                            >
+                            <div id="timer-badge" class="timer-badge hidden">
+                                <span id="countdown">60</span>s
+                            </div>
+                        </div>
+                        <span class="field-hint">Enter the 8-digit code sent to your email</span>
+                        <span class="field-error" id="otp-error"></span>
+                    </div>
+                    
+                    <!-- Primary Button -->
+                    <button type="submit" id="submit-btn" class="btn-primary">
+                        <span class="btn-text">Send Verification Code</span>
+                        <svg class="btn-spinner hidden" width="20" height="20" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="32" stroke-linecap="round">
+                                <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="1s" repeatCount="indefinite"/>
+                            </circle>
+                        </svg>
+                    </button>
+                    
+                    <!-- Resend Link -->
+                    <div id="resend-section" class="resend-section hidden">
+                        <button type="button" id="resend-btn" class="btn-link" disabled>
+                            Resend Code
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Success State -->
+            <div id="step-success" class="step hidden">
+                <div class="success-content">
+                    <div class="success-icon">
+                        <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                            <circle cx="24" cy="24" r="24" fill="#22c55e"/>
+                            <path d="M14 24L22 32L34 18" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <h2>You're Registered!</h2>
+                    <p class="subtitle">Your registration has been completed successfully.</p>
+                    <div id="registration-details" class="details-card"></div>
+                </div>
+            </div>
+
+            <!-- Toast Message -->
+            <div id="toast" class="toast hidden"></div>
+        </div>
+        
+        <p class="footer-text">Secure registration powered by Supabase</p>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="app.js"></script>
+</body>
+</html>
