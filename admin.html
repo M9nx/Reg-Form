@@ -238,18 +238,16 @@
             try {
                 const { data, error } = await adminClient
                     .from('registrations')
-                    .select('*')
+                    .select('full_name, email')
                     .order('created_at', { ascending: true });
 
                 if (error) throw error;
 
-                // Create CSV
-                const headers = ['ID', 'Full Name', 'Email', 'Created At'];
+                // Create CSV with only Full Name and Email
+                const headers = ['Full Name', 'Email'];
                 const rows = data.map(r => [
-                    r.id,
                     `"${r.full_name.replace(/"/g, '""')}"`,
-                    r.email,
-                    r.created_at
+                    r.email
                 ]);
 
                 const csv = [
