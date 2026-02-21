@@ -24,6 +24,7 @@ FormForm/
 │   └── migrations/
 │       └── 20260217_create_registrations.sql
 └── README.md
+
 ```
 
 ## Setup Instructions
