@@ -20,7 +20,7 @@ let state = {
     isLoading: false,
     members: [],
     maxMembers: 6,
-    minMembers: 1,
+    minMembers: 5,
     token: ''
 };
 
@@ -264,7 +264,7 @@ function lockTokenInput(isLocked) {
 }
 
 function resetEdit() {
-    state = { isLoading: false, members: [], maxMembers: 6, minMembers: 1, token: '' };
+    state = { isLoading: false, members: [], maxMembers: 6, minMembers: 5, token: '' };
     dom.editToken.value = '';
     dom.editTeamName.value = '';
     dom.editMemberInput.value = '';
@@ -308,7 +308,7 @@ function getTeamErrorMessage(error) {
         return 'Duplicate member names are not allowed.';
     }
     if (msg.includes('member count')) {
-        return 'Teams must have between 1 and 6 members.';
+        return 'Teams must have between 5 and 6 members.';
     }
     if (msg.includes('invalid token')) {
         return 'Invalid token. Please check and try again.';

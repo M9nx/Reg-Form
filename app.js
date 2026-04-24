@@ -318,7 +318,7 @@ function getTeamErrorMessage(error) {
         return 'Duplicate member names are not allowed.';
     }
     if (msg.includes('member count')) {
-        return 'Teams must have between 1 and 6 members.';
+        return 'Teams must have between 5 and 6 members.';
     }
     if (msg.includes('row-level security') || msg.includes('violates row-level security policy')) {
         return 'Submission is temporarily unavailable. Please try again in a moment.';
