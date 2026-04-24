@@ -1,5 +1,5 @@
 /**
- * Team Registration App with Supabase
+ * Edit Team Submission
  */
 
 // ============================================
@@ -20,7 +20,8 @@ let state = {
     isLoading: false,
     members: [],
     maxMembers: 6,
-    minMembers: 1
+    minMembers: 1,
+    token: ''
 };
 
 // ============================================
@@ -33,6 +34,7 @@ let dom = {};
 // ============================================
 // SECURITY & VALIDATION
 // ============================================
+
 const MEMBER_NAME_REGEX = /^[A-Za-z\s]+$/;
 
 function sanitizeInput(input) {
@@ -51,6 +53,11 @@ function sanitizeName(input) {
         .replace(/[^A-Za-z ]/g, '')
         .replace(/\s+/g, ' ')
         .substring(0, 50);
+}
+
+function sanitizeToken(input) {
+    if (typeof input !== 'string') return '';
+    return input.trim().toLowerCase().replace(/[^a-f0-9-]/g, '').substring(0, 64);
 }
 
 
@@ -98,29 +105,29 @@ function validateMembersArray(members, fieldKey) {
     return true;
 }
 
-function validateForm() {
+function validateEditForm() {
     let isValid = true;
     clearErrors();
 
-    const teamName = sanitizeInput(dom.teamName.value);
-    dom.teamName.value = teamName;
+    const teamName = sanitizeInput(dom.editTeamName.value);
+    dom.editTeamName.value = teamName;
 
     if (!teamName) {
-        showFieldError('team-name', 'Team name is required');
+        showFieldError('edit-team-name', 'Team name is required');
         isValid = false;
     }
 
 
     if (state.members.length < state.minMembers) {
-        showFieldError('member', `Add at least ${state.minMembers} member`);
+        showFieldError('edit-member', `Add at least ${state.minMembers} member`);
         isValid = false;
     }
     if (state.members.length > state.maxMembers) {
-        showFieldError('member', `Maximum ${state.maxMembers} members allowed`);
+        showFieldError('edit-member', `Maximum ${state.maxMembers} members allowed`);
         isValid = false;
     }
 
-    if (!validateMembersArray(state.members, 'member')) {
+    if (!validateMembersArray(state.members, 'edit-member')) {
         isValid = false;
     }
 
@@ -142,8 +149,9 @@ function clearFieldError(field) {
 }
 
 function clearErrors() {
-    clearFieldError('team-name');
-    clearFieldError('member');
+    clearFieldError('edit-token');
+    clearFieldError('edit-team-name');
+    clearFieldError('edit-member');
 }
 
 function handleValidationError(validation, fieldKey) {
@@ -172,54 +180,13 @@ function setButtonLoading(button, loading) {
     }
 }
 
-function setLoading(loading) {
+function setLookupLoading(loading) {
+    setButtonLoading(dom.loadTeamBtn, loading);
+}
+
+function setSaveLoading(loading) {
     state.isLoading = loading;
-    setButtonLoading(dom.submitBtn, loading);
-}
-
-function addMember() {
-    const input = dom.memberInput.value.trim();
-    if (!input) return;
-
-    const validation = validateMemberName(input);
-    if (!validation.valid) {
-        handleValidationError(validation, 'member');
-        return;
-    }
-
-    const sanitized = validation.sanitized;
-    if (isDuplicateMember(state.members, sanitized)) {
-        showFieldError('member', 'This member is already added');
-        return;
-    }
-
-    if (state.members.length >= state.maxMembers) {
-        showFieldError('member', `Maximum ${state.maxMembers} members allowed`);
-        return;
-    }
-
-    state.members.push(sanitized);
-    dom.memberInput.value = '';
-    clearFieldError('member');
-    renderMembersList();
-}
-
-function removeMember(index) {
-    state.members.splice(index, 1);
-    renderMembersList();
-}
-
-function renderMembersList() {
-    dom.membersList.innerHTML = state.members
-        .map((member, i) => `
-            <div class="member-item">
-                <span>${escapeHtml(member)}</span>
-                <button type="button" class="btn-remove" onclick="removeMember(${i})">
-                    ✕
-                </button>
-            </div>
-        `)
-        .join('');
+    setButtonLoading(dom.saveTeamBtn, loading);
 }
 
 function showToast(message, type = 'info') {
@@ -236,44 +203,67 @@ function showToast(message, type = 'info') {
     }, 4000);
 }
 
-function showTeamSuccess(details) {
-    const members = Array.isArray(details.members) ? details.members : [];
-    const actionLabel = details.action === 'updated' ? 'Updated' : 'Submitted';
-    const timeLabel = details.action === 'updated' ? 'Updated at' : 'Submitted at';
-    const timeValue = formatTimestamp(details.timestamp);
-    const editLink = `edit.html?token=${encodeURIComponent(details.token || '')}`;
+function addMember() {
+    const input = dom.editMemberInput.value.trim();
+    if (!input) return;
 
-    dom.stepForm.classList.add('hidden');
-    dom.stepSuccess.classList.remove('hidden');
+    const validation = validateMemberName(input);
+    if (!validation.valid) {
+        handleValidationError(validation, 'edit-member');
+        return;
+    }
 
-    dom.teamDetails.innerHTML = `
-        <div class="detail-note">${escapeHtml(actionLabel)} successfully. You can edit this submission anytime using the token on the Edit page.</div>
-        <div class="detail-row">
-            <span class="detail-label">Team Name</span>
-            <span class="detail-value">${escapeHtml(details.teamName)}</span>
-        </div>
-        <div class="detail-row">
-            <span class="detail-label">Team Token</span>
-            <span class="detail-value token-display" id="team-token">${escapeHtml(details.token)}</span>
-            <button type="button" id="copy-token-btn" class="btn-copy" title="Copy token">📋</button>
-        </div>
-        <div class="detail-row">
-            <span class="detail-label">Members (${members.length})</span>
-            <span class="detail-value">${members.map(m => escapeHtml(m)).join(', ')}</span>
-        </div>
-        <div class="detail-row">
-            <span class="detail-label">${escapeHtml(timeLabel)}</span>
-            <span class="detail-value">${escapeHtml(timeValue)}</span>
-        </div>
-        <div class="button-row success-actions">
-            <a class="btn-secondary" href="${editLink}">Edit this submission</a>
-        </div>
-    `;
+    const sanitized = validation.sanitized;
+    if (isDuplicateMember(state.members, sanitized)) {
+        showFieldError('edit-member', 'This member is already added');
+        return;
+    }
 
-    document.getElementById('copy-token-btn')?.addEventListener('click', () => {
-        navigator.clipboard.writeText(details.token);
-        showToast('Token copied!', 'success');
-    });
+    if (state.members.length >= state.maxMembers) {
+        showFieldError('edit-member', `Maximum ${state.maxMembers} members allowed`);
+        return;
+    }
+
+    state.members.push(sanitized);
+    dom.editMemberInput.value = '';
+    clearFieldError('edit-member');
+    renderMembersList();
+}
+
+function removeMember(index) {
+    state.members.splice(index, 1);
+    renderMembersList();
+}
+
+function renderMembersList() {
+    dom.editMembersList.innerHTML = state.members
+        .map((member, i) => `
+            <div class="member-item">
+                <span>${escapeHtml(member)}</span>
+                <button type="button" class="btn-remove" onclick="removeMember(${i})">
+                    ✕
+                </button>
+            </div>
+        `)
+        .join('');
+}
+
+function lockTokenInput(isLocked) {
+    dom.editToken.readOnly = isLocked;
+    dom.editToken.classList.toggle('locked', isLocked);
+}
+
+function resetEdit() {
+    state = { isLoading: false, members: [], maxMembers: 6, minMembers: 1, token: '' };
+    dom.editToken.value = '';
+    dom.editTeamName.value = '';
+    dom.editMemberInput.value = '';
+    dom.editMembersList.innerHTML = '';
+    clearErrors();
+    lockTokenInput(false);
+    dom.editForm.classList.add('hidden');
+    dom.editSuccess.classList.add('hidden');
+    dom.editLookup.classList.remove('hidden');
 }
 
 function escapeHtml(text) {
@@ -309,6 +299,9 @@ function getTeamErrorMessage(error) {
     }
     if (msg.includes('member count')) {
         return 'Teams must have between 1 and 6 members.';
+    }
+    if (msg.includes('invalid token')) {
+        return 'Invalid token. Please check and try again.';
     }
 
     if (code === '23505' || msg.includes('unique') || msg.includes('duplicate')) {
@@ -355,44 +348,145 @@ function loadSavedSubmission() {
     }
 }
 
+function getPrefillToken() {
+    const params = new URLSearchParams(window.location.search);
+    const tokenParam = sanitizeToken(params.get('token') || '');
+    if (tokenParam) return tokenParam;
+
+    const saved = loadSavedSubmission();
+    if (saved?.token) {
+        return sanitizeToken(saved.token);
+    }
+
+    return '';
+}
+
+
+function showEditSuccess(details) {
+    const members = Array.isArray(details.members) ? details.members : [];
+    const timeLabel = details.action === 'updated' ? 'Updated at' : 'Submitted at';
+    const timeValue = formatTimestamp(details.timestamp);
+
+    dom.editForm.classList.add('hidden');
+    dom.editLookup.classList.add('hidden');
+    dom.editSuccess.classList.remove('hidden');
+
+    dom.editDetails.innerHTML = `
+        <div class="detail-note">Updated successfully. You can edit this submission anytime using the token on the Edit page.</div>
+        <div class="detail-row">
+            <span class="detail-label">Team Name</span>
+            <span class="detail-value">${escapeHtml(details.teamName)}</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Team Token</span>
+            <span class="detail-value token-display" id="edit-team-token">${escapeHtml(details.token)}</span>
+            <button type="button" id="edit-copy-token-btn" class="btn-copy" title="Copy token">📋</button>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Members (${members.length})</span>
+            <span class="detail-value">${members.map(m => escapeHtml(m)).join(', ')}</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">${escapeHtml(timeLabel)}</span>
+            <span class="detail-value">${escapeHtml(timeValue)}</span>
+        </div>
+    `;
+
+    document.getElementById('edit-copy-token-btn')?.addEventListener('click', () => {
+        navigator.clipboard.writeText(details.token);
+        showToast('Token copied!', 'success');
+    });
+}
+
+function showEditForm() {
+    dom.editSuccess.classList.add('hidden');
+    dom.editForm.classList.remove('hidden');
+}
 
 // ============================================
 // API CALLS
 // ============================================
-async function createTeam() {
-    if (!validateForm()) return;
+async function loadTeamForEdit() {
+    clearErrors();
+    const token = sanitizeToken(dom.editToken.value);
+    dom.editToken.value = token;
 
-    setLoading(true);
+    if (!token) {
+        showFieldError('edit-token', 'Token is required');
+        return;
+    }
+
+    setLookupLoading(true);
 
     try {
-        const teamName = dom.teamName.value.trim();
+        const { data, error } = await supabaseClient
+            .from('teams')
+            .select('id, team_name, token, team_members(member_name)')
+            .eq('token', token)
+            .single();
+
+        if (error) throw error;
+
+        state.token = data.token;
+        state.members = (data.team_members || []).map(m => sanitizeName(m.member_name));
+
+        dom.editTeamName.value = data.team_name || '';
+        renderMembersList();
+
+        lockTokenInput(true);
+        dom.editLookup.classList.add('hidden');
+        dom.editForm.classList.remove('hidden');
+
+        showToast('Team loaded. You can update and save changes.', 'success');
+    } catch (error) {
+        console.error('Load team error:', error);
+        showFieldError('edit-token', 'Invalid token or team not found');
+        showToast(getTeamErrorMessage(error), 'error');
+    } finally {
+        setLookupLoading(false);
+    }
+}
+
+async function updateTeam() {
+    if (!validateEditForm()) return;
+    if (!state.token) {
+        showFieldError('edit-token', 'Token is required');
+        return;
+    }
+
+    setSaveLoading(true);
+
+    try {
+        const teamName = dom.editTeamName.value.trim();
         const members = [...state.members];
 
         const { data, error } = await supabaseClient
-            .rpc('create_team_with_members', {
+            .rpc('update_team_with_members', {
+                p_token: state.token,
                 p_team_name: teamName,
                 p_members: members
             });
 
         if (error) throw error;
 
+        state.token = data.token;
         const details = {
             teamName,
             members,
             token: data.token,
             timestamp: new Date().toISOString(),
-            action: 'created'
+            action: 'updated'
         };
 
         saveSubmission(details);
-        showTeamSuccess(details);
-        showToast('Team created successfully!', 'success');
+        showEditSuccess(details);
+        showToast('Team updated successfully!', 'success');
 
     } catch (error) {
-        console.error('Create team error:', error);
+        console.error('Update team error:', error);
         showToast(getTeamErrorMessage(error), 'error');
     } finally {
-        setLoading(false);
+        setSaveLoading(false);
     }
 }
 
@@ -400,22 +494,33 @@ async function createTeam() {
 // EVENT LISTENERS
 // ============================================
 function initEventListeners() {
-    dom.form.addEventListener('submit', async (e) => {
+    dom.loadTeamBtn.addEventListener('click', loadTeamForEdit);
+    dom.editToken.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            loadTeamForEdit();
+        }
+    });
+    dom.changeTokenBtn.addEventListener('click', resetEdit);
+    dom.editAgainBtn.addEventListener('click', showEditForm);
+
+    dom.editTeamForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         if (state.isLoading) return;
-        await createTeam();
+        await updateTeam();
     });
 
-    dom.addMemberBtn.addEventListener('click', addMember);
-    dom.memberInput.addEventListener('keypress', (e) => {
+    dom.editAddMemberBtn.addEventListener('click', addMember);
+    dom.editMemberInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
             addMember();
         }
     });
 
-    dom.teamName.addEventListener('input', () => clearFieldError('team-name'));
-    dom.memberInput.addEventListener('input', () => clearFieldError('member'));
+    dom.editToken.addEventListener('input', () => clearFieldError('edit-token'));
+    dom.editTeamName.addEventListener('input', () => clearFieldError('edit-team-name'));
+    dom.editMemberInput.addEventListener('input', () => clearFieldError('edit-member'));
 }
 
 // ============================================
@@ -423,27 +528,33 @@ function initEventListeners() {
 // ============================================
 function init() {
     dom = {
-        stepForm: $('step-form'),
-        stepSuccess: $('step-success'),
-        form: $('registration-form'),
-        teamName: $('team-name'),
-        memberInput: $('member-input'),
-        addMemberBtn: $('add-member-btn'),
-        membersList: $('members-list'),
-        submitBtn: $('submit-btn'),
-        teamDetails: $('team-details'),
+        editLookup: $('edit-lookup'),
+        editForm: $('edit-form'),
+        editToken: $('edit-token'),
+        loadTeamBtn: $('load-team-btn'),
+        editTeamForm: $('edit-team-form'),
+        editTeamName: $('edit-team-name'),
+        editMemberInput: $('edit-member-input'),
+        editAddMemberBtn: $('edit-add-member-btn'),
+        editMembersList: $('edit-members-list'),
+        saveTeamBtn: $('save-team-btn'),
+        changeTokenBtn: $('change-token-btn'),
+        editSuccess: $('edit-success'),
+        editDetails: $('edit-details'),
+        editAgainBtn: $('edit-again-btn'),
         toast: $('toast')
     };
 
     initEventListeners();
 
-    const saved = loadSavedSubmission();
-    if (saved) {
-        showTeamSuccess(saved);
+    const prefillToken = getPrefillToken();
+    if (prefillToken) {
+        dom.editToken.value = prefillToken;
+        loadTeamForEdit();
         return;
     }
 
-    dom.teamName?.focus();
+    dom.editToken?.focus();
 }
 
 // Start

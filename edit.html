@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co; img-src 'self' data:; base-uri 'self'; form-action 'self';">
-    <title>SA Project Team Registration</title>
+    <title>Edit SA Project Team</title>
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -20,30 +20,53 @@
                         <path d="M12 20L18 26L28 14" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                 </div>
-                <h1>SA Project Team Registration</h1>
-                <p class="subtitle">Create your team submission for the System Analysis project</p>
+                <h1>Edit SA Project Team</h1>
+                <p class="subtitle">Update your System Analysis team details with the token you received</p>
                 <div class="warning-box">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
                         <line x1="12" y1="9" x2="12" y2="13"></line>
                         <line x1="12" y1="17" x2="12.01" y2="17"></line>
                     </svg>
-                    <span>Use real full names. Each member can join only one team.</span>
+                    <span>Changes replace all members. Make sure names are final.</span>
                 </div>
             </div>
-            
-            <!-- Registration Form -->
-            <div id="step-form" class="step">
-                <form id="registration-form" method="POST" action="#">
+
+            <div id="edit-lookup" class="step">
+                <div class="form-group">
+                    <label for="edit-token">Team Token</label>
+                    <input
+                        type="text"
+                        id="edit-token"
+                        placeholder="Enter your team token"
+                    >
+                    <span class="field-hint">Token is shown after team creation</span>
+                    <span class="field-error" id="edit-token-error"></span>
+                </div>
+                <div class="button-row">
+                    <button type="button" id="load-team-btn" class="btn-primary">
+                        <span class="btn-text">Load Team</span>
+                        <svg class="btn-spinner hidden" width="20" height="20" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="32" stroke-linecap="round">
+                                <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="1s" repeatCount="indefinite"/>
+                            </circle>
+                        </svg>
+                    </button>
+                    <a class="btn-link" href="index.html">Back to registration</a>
+                </div>
+            </div>
+
+            <div id="edit-form" class="step hidden">
+                <form id="edit-team-form" method="POST" action="#">
                     <div class="form-group">
-                        <label for="team-name">Team Name</label>
+                        <label for="edit-team-name">Team Name</label>
                         <input
                             type="text"
-                            id="team-name"
+                            id="edit-team-name"
                             placeholder="Enter team name"
                         >
                         <span class="field-hint">Team name must be unique</span>
-                        <span class="field-error" id="team-name-error"></span>
+                        <span class="field-error" id="edit-team-name-error"></span>
                     </div>
 
 
@@ -52,38 +75,35 @@
                         <div class="members-input-wrapper">
                             <input
                                 type="text"
-                                id="member-input"
+                                id="edit-member-input"
                                 placeholder="Enter member name (e.g., John Michael Smith)"
                             >
-                            <button type="button" id="add-member-btn" class="btn-secondary">
+                            <button type="button" id="edit-add-member-btn" class="btn-secondary">
                                 Add Member
                             </button>
                         </div>
                         <span class="field-hint">Names must have 3+ words, letters and spaces only. Max 6 members.</span>
-                        <span class="field-error" id="member-error"></span>
+                        <span class="field-error" id="edit-member-error"></span>
 
-                        <div id="members-list" class="members-list"></div>
+                        <div id="edit-members-list" class="members-list"></div>
                     </div>
-                    
-                    <!-- Primary Button -->
-                    <button type="submit" id="submit-btn" class="btn-primary">
-                        <span class="btn-text">Create Team</span>
+
+                    <button type="submit" id="save-team-btn" class="btn-primary">
+                        <span class="btn-text">Save Changes</span>
                         <svg class="btn-spinner hidden" width="20" height="20" viewBox="0 0 24 24">
                             <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="32" stroke-linecap="round">
                                 <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="1s" repeatCount="indefinite"/>
                             </circle>
                         </svg>
                     </button>
-
-                    <div class="resend-section">
-                        <a class="btn-link" href="edit.html">Edit an existing team</a>
+                    <div class="button-row">
+                        <button type="button" id="change-token-btn" class="btn-secondary">Change Token</button>
+                        <a class="btn-link" href="index.html">Back to registration</a>
                     </div>
-
                 </form>
             </div>
 
-            <!-- Success State -->
-            <div id="step-success" class="step hidden">
+            <div id="edit-success" class="step hidden">
                 <div class="success-content">
                     <div class="success-icon">
                         <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
@@ -91,25 +111,27 @@
                             <path d="M14 24L22 32L34 18" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                     </div>
-                    <h2>Team Created Successfully!</h2>
-                    <p class="subtitle">Your team has been registered. Share the token with your teammates.</p>
-                    <div id="team-details" class="details-card"></div>
+                    <h2>Team Updated Successfully!</h2>
+                    <p class="subtitle">Your changes have been saved. Share the token if needed.</p>
+                    <div id="edit-details" class="details-card"></div>
+                    <div class="button-row success-actions">
+                        <button type="button" id="edit-again-btn" class="btn-secondary">Edit Again</button>
+                        <a class="btn-link" href="index.html">Back to registration</a>
+                    </div>
                 </div>
             </div>
 
-            <!-- Toast Message -->
             <div id="toast" class="toast hidden"></div>
         </div>
 
-        
         <div class="help-section">
             <a class="btn-secondary" href="https://wa.me/201229732478?text=Hi,%20I%20need%20help%20with%20CCNA%20course%20registration" target="_blank" rel="noopener">Having a problem? Chat on WhatsApp</a>
         </div>
 
-        <p class="footer-text">SA (System Analysis) Project - verification Vibe-Coded by <a href="https://github.com/M9nx">M9nx</a></p>
+        <p class="footer-text">SA (System Analysis) Project - Secure verification powered by <a href="https://github.com/M9nx">M9nx</a></p>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="app.js"></script>
+    <script src="edit.js"></script>
 </body>
 </html>

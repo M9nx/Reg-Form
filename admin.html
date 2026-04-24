@@ -3,289 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin - Export Registrations</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f8fafc;
-            min-height: 100vh;
-            padding: 2rem;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-        h1 { margin-bottom: 1.5rem; color: #1e293b; }
-        .card {
-            background: white;
-            border-radius: 12px;
-            padding: 2rem;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-            margin-bottom: 1.5rem;
-        }
-        .form-group { margin-bottom: 1rem; }
-        label { display: block; font-weight: 500; margin-bottom: 0.5rem; }
-        input {
-            width: 100%;
-            padding: 0.75rem;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
-            font-size: 1rem;
-        }
-        button {
-            padding: 0.75rem 1.5rem;
-            background: #6366f1;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            margin-right: 0.5rem;
-            margin-top: 0.5rem;
-        }
-        button:hover { background: #4f46e5; }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
-        button.secondary { background: #64748b; }
-        button.secondary:hover { background: #475569; }
-        .message {
-            padding: 1rem;
-            border-radius: 8px;
-            margin-top: 1rem;
-        }
-        .message.error { background: #fef2f2; color: #ef4444; }
-        .message.success { background: #f0fdf4; color: #22c55e; }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 1rem;
-        }
-        th, td {
-            padding: 0.75rem;
-            text-align: left;
-            border-bottom: 1px solid #e2e8f0;
-        }
-        th { background: #f8fafc; font-weight: 600; }
-        .stats {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 1rem;
-        }
-        .stat {
-            background: #f1f5f9;
-            padding: 1rem;
-            border-radius: 8px;
-            flex: 1;
-        }
-        .stat-value { font-size: 2rem; font-weight: 700; color: #6366f1; }
-        .stat-label { color: #64748b; font-size: 0.875rem; }
-        .hidden { display: none; }
-        .warning {
-            background: #fffbeb;
-            border: 1px solid #fbbf24;
-            color: #92400e;
-            padding: 1rem;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-        }
-    </style>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co; img-src 'self' data:; base-uri 'self'; form-action 'self';">
+    <title>Admin - SA Project Teams</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 </head>
-<body>
-    <div class="container">
-        <h1>Admin Dashboard</h1>
-        
-        <!-- Auth Section -->
+<body class="admin">
+    <div class="container admin-container">
         <div id="auth-section" class="card">
-            <h2>Service Role Authentication</h2>
-            <div class="warning">
-                <strong>Security Warning:</strong> This page uses the service role key which bypasses RLS. 
-                Only use this on your local machine or a secure admin environment. Never expose the service role key publicly.
+            <div class="card-header">
+                <h1>Admin Dashboard</h1>
+                <p class="subtitle">Manage System Analysis teams and export submissions</p>
             </div>
+
+            <div class="warning-box">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+                <span>Use the service role key only on a secure machine. Never expose it publicly.</span>
+            </div>
+
             <div class="form-group">
                 <label for="service-key">Service Role Key</label>
                 <input type="password" id="service-key" placeholder="Enter your Supabase service role key">
             </div>
-            <button id="connect-btn">Connect</button>
-            <div id="auth-message" class="message hidden"></div>
+            <div class="button-row">
+                <button id="connect-btn" class="btn-primary">
+                    <span class="btn-text">Connect</span>
+                    <svg class="btn-spinner hidden" width="20" height="20" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="32" stroke-linecap="round">
+                            <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="1s" repeatCount="indefinite"/>
+                        </circle>
+                    </svg>
+                </button>
+            </div>
         </div>
 
-        <!-- Dashboard Section -->
         <div id="dashboard-section" class="hidden">
             <div class="card">
                 <div class="stats">
                     <div class="stat">
-                        <div class="stat-value" id="total-count">0</div>
-                        <div class="stat-label">Total Registrations</div>
+                        <div class="stat-value" id="total-teams">0</div>
+                        <div class="stat-label">Total Teams</div>
                     </div>
                     <div class="stat">
-                        <div class="stat-value" id="today-count">0</div>
-                        <div class="stat-label">Today</div>
+                        <div class="stat-value" id="total-members">0</div>
+                        <div class="stat-label">Total Members</div>
                     </div>
                 </div>
-                <button id="refresh-btn">Refresh</button>
-                <button id="export-btn" class="secondary">Export CSV</button>
-                <button id="disconnect-btn" class="secondary">Disconnect</button>
+                <div class="button-row">
+                    <button id="refresh-btn" class="btn-secondary">Refresh</button>
+                    <button id="export-btn" class="btn-secondary">Export CSV</button>
+                    <button id="disconnect-btn" class="btn-secondary">Disconnect</button>
+                </div>
             </div>
 
             <div class="card">
-                <h3>Registrations</h3>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Full Name</th>
-                            <th>Email</th>
-                            <th>Registered At</th>
-                        </tr>
-                    </thead>
-                    <tbody id="registrations-table"></tbody>
-                </table>
+                <h2>Teams</h2>
+                <p class="subtitle">Team name with member list</p>
+                <div class="table-wrapper">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Team Name</th>
+                                <th>Members</th>
+                            </tr>
+                        </thead>
+                        <tbody id="teams-table"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
+
+        <div class="help-section">
+            <a class="btn-secondary" href="https://wa.me/201229732478?text=Hi,%20I%20need%20help%20with%20CCNA%20course%20registration" target="_blank" rel="noopener">Having a problem? Chat on WhatsApp</a>
+        </div>
+
+        <div id="toast" class="toast hidden"></div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>
-        // Configuration
-        const SUPABASE_URL = 'https://flqtbpynxiwpcydszxov.supabase.co';
-        
-        let adminClient = null;
-
-        const elements = {
-            authSection: document.getElementById('auth-section'),
-            dashboardSection: document.getElementById('dashboard-section'),
-            serviceKeyInput: document.getElementById('service-key'),
-            connectBtn: document.getElementById('connect-btn'),
-            authMessage: document.getElementById('auth-message'),
-            totalCount: document.getElementById('total-count'),
-            todayCount: document.getElementById('today-count'),
-            registrationsTable: document.getElementById('registrations-table'),
-            refreshBtn: document.getElementById('refresh-btn'),
-            exportBtn: document.getElementById('export-btn'),
-            disconnectBtn: document.getElementById('disconnect-btn'),
-        };
-
-        function showMessage(element, text, type) {
-            element.textContent = text;
-            element.className = `message ${type}`;
-            element.classList.remove('hidden');
-        }
-
-        async function connect() {
-            const serviceKey = elements.serviceKeyInput.value.trim();
-            if (!serviceKey) {
-                showMessage(elements.authMessage, 'Please enter the service role key', 'error');
-                return;
-            }
-
-            try {
-                adminClient = window.supabase.createClient(SUPABASE_URL, serviceKey);
-                
-                // Test connection
-                const { data, error } = await adminClient.from('registrations').select('count');
-                if (error) throw error;
-
-                elements.authSection.classList.add('hidden');
-                elements.dashboardSection.classList.remove('hidden');
-                await loadData();
-            } catch (error) {
-                showMessage(elements.authMessage, 'Connection failed: ' + error.message, 'error');
-            }
-        }
-
-        async function loadData() {
-            try {
-                // Get all registrations
-                const { data, error } = await adminClient
-                    .from('registrations')
-                    .select('*')
-                    .order('created_at', { ascending: false });
-
-                if (error) throw error;
-
-                // Update stats
-                elements.totalCount.textContent = data.length;
-                
-                const today = new Date().toDateString();
-                const todayCount = data.filter(r => 
-                    new Date(r.created_at).toDateString() === today
-                ).length;
-                elements.todayCount.textContent = todayCount;
-
-                // Update table
-                elements.registrationsTable.innerHTML = data.map((r, i) => `
-                    <tr>
-                        <td>${i + 1}</td>
-                        <td>${escapeHtml(r.full_name)}</td>
-                        <td>${escapeHtml(r.email)}</td>
-                        <td>${new Date(r.created_at).toLocaleString()}</td>
-                    </tr>
-                `).join('');
-
-            } catch (error) {
-                console.error('Load error:', error);
-            }
-        }
-
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        async function exportCSV() {
-            try {
-                const { data, error } = await adminClient
-                    .from('registrations')
-                    .select('full_name, email')
-                    .order('created_at', { ascending: true });
-
-                if (error) throw error;
-
-                // Create CSV with only Full Name and Email
-                const headers = ['Full Name', 'Email'];
-                const rows = data.map(r => [
-                    `"${r.full_name.replace(/"/g, '""')}"`,
-                    r.email
-                ]);
-
-                const csv = [
-                    headers.join(','),
-                    ...rows.map(r => r.join(','))
-                ].join('\n');
-
-                // Download
-                const blob = new Blob([csv], { type: 'text/csv' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `registrations_${new Date().toISOString().split('T')[0]}.csv`;
-                a.click();
-                URL.revokeObjectURL(url);
-
-            } catch (error) {
-                console.error('Export error:', error);
-                alert('Export failed: ' + error.message);
-            }
-        }
-
-        function disconnect() {
-            adminClient = null;
-            elements.serviceKeyInput.value = '';
-            elements.authMessage.classList.add('hidden');
-            elements.dashboardSection.classList.add('hidden');
-            elements.authSection.classList.remove('hidden');
-        }
-
-        // Event listeners
-        elements.connectBtn.addEventListener('click', connect);
-        elements.refreshBtn.addEventListener('click', loadData);
-        elements.exportBtn.addEventListener('click', exportCSV);
-        elements.disconnectBtn.addEventListener('click', disconnect);
-        elements.serviceKeyInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') connect();
-        });
-    </script>
+    <script src="admin.js"></script>
 </body>
 </html>
