@@ -167,7 +167,7 @@ async function exportCSV() {
             await loadData();
         }
 
-        const headers = ['Team Name', 'Members'];
+        const headers = ['Project Name', 'Members'];
         const rows = state.teams.map(team => {
             const members = (team.team_members || [])
                 .map(m => m.member_name)

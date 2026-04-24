@@ -113,7 +113,7 @@ function validateEditForm() {
     dom.editTeamName.value = teamName;
 
     if (!teamName) {
-        showFieldError('edit-team-name', 'Team name is required');
+        showFieldError('edit-team-name', 'Project name is required');
         isValid = false;
     }
 
@@ -289,7 +289,7 @@ function getTeamErrorMessage(error) {
     const code = String(error?.code || '');
 
     if (msg.includes('team_name_exists')) {
-        return 'Team name already exists. Please choose another.';
+        return 'Project name already exists. Please choose another.';
     }
     if (msg.includes('member_name_exists')) {
         return 'One or more member names are already taken.';
@@ -305,7 +305,7 @@ function getTeamErrorMessage(error) {
     }
 
     if (code === '23505' || msg.includes('unique') || msg.includes('duplicate')) {
-        if (msg.includes('team_name')) return 'Team name already exists. Please choose another.';
+        if (msg.includes('team_name')) return 'Project name already exists. Please choose another.';
         if (msg.includes('member_name')) return 'One or more member names are already taken.';
         return 'Duplicate values detected. Please review your inputs.';
     }
@@ -374,7 +374,7 @@ function showEditSuccess(details) {
     dom.editDetails.innerHTML = `
         <div class="detail-note">Updated successfully. You can edit this submission anytime using the token on the Edit page.</div>
         <div class="detail-row">
-            <span class="detail-label">Team Name</span>
+            <span class="detail-label">Project Name</span>
             <span class="detail-value">${escapeHtml(details.teamName)}</span>
         </div>
         <div class="detail-row">

@@ -106,7 +106,7 @@ function validateForm() {
     dom.teamName.value = teamName;
 
     if (!teamName) {
-        showFieldError('team-name', 'Team name is required');
+        showFieldError('team-name', 'Project name is required');
         isValid = false;
     }
 
@@ -249,7 +249,7 @@ function showTeamSuccess(details) {
     dom.teamDetails.innerHTML = `
         <div class="detail-note">${escapeHtml(actionLabel)} successfully. You can edit this submission anytime using the token on the Edit page.</div>
         <div class="detail-row">
-            <span class="detail-label">Team Name</span>
+            <span class="detail-label">Project Name</span>
             <span class="detail-value">${escapeHtml(details.teamName)}</span>
         </div>
         <div class="detail-row">
@@ -299,7 +299,7 @@ function getTeamErrorMessage(error) {
     const code = String(error?.code || '');
 
     if (msg.includes('team_name_exists')) {
-        return 'Team name already exists. Please choose another.';
+        return 'Project name already exists. Please choose another.';
     }
     if (msg.includes('member_name_exists')) {
         return 'One or more member names are already taken.';
@@ -312,7 +312,7 @@ function getTeamErrorMessage(error) {
     }
 
     if (code === '23505' || msg.includes('unique') || msg.includes('duplicate')) {
-        if (msg.includes('team_name')) return 'Team name already exists. Please choose another.';
+        if (msg.includes('team_name')) return 'Project name already exists. Please choose another.';
         if (msg.includes('member_name')) return 'One or more member names are already taken.';
         return 'Duplicate values detected. Please review your inputs.';
     }

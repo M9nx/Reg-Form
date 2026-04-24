@@ -12,7 +12,7 @@ DECLARE
   v_members TEXT[];
 BEGIN
   IF p_team_name IS NULL OR btrim(p_team_name) = '' THEN
-    RAISE EXCEPTION 'Team name is required';
+    RAISE EXCEPTION 'Project name is required';
   END IF;
 
   IF p_members IS NULL OR array_length(p_members, 1) IS NULL THEN
@@ -39,7 +39,7 @@ BEGIN
     RAISE EXCEPTION 'Duplicate member names in input array';
   END IF;
 
-  -- Check if team name already exists (case-insensitive)
+  -- Check if project name already exists (case-insensitive)
   IF EXISTS (SELECT 1 FROM teams WHERE lower(team_name) = lower(p_team_name)) THEN
     RAISE EXCEPTION 'team_name_exists' USING ERRCODE = '23505';
   END IF;
@@ -96,7 +96,7 @@ BEGIN
   END IF;
 
   IF p_team_name IS NULL OR btrim(p_team_name) = '' THEN
-    RAISE EXCEPTION 'Team name is required';
+    RAISE EXCEPTION 'Project name is required';
   END IF;
 
   IF p_members IS NULL OR array_length(p_members, 1) IS NULL THEN
@@ -123,7 +123,7 @@ BEGIN
     RAISE EXCEPTION 'Duplicate member names in input array';
   END IF;
 
-  -- Check if team name already exists (case-insensitive) for another team
+  -- Check if project name already exists (case-insensitive) for another team
   IF EXISTS (
     SELECT 1
     FROM teams
