@@ -214,12 +214,22 @@ function renderMembersList() {
         .map((member, i) => `
             <div class="member-item">
                 <span>${escapeHtml(member)}</span>
-                <button type="button" class="btn-remove" onclick="removeMember(${i})">
+                <button type="button" class="btn-remove" data-member-index="${i}" aria-label="Remove member ${i + 1}">
                     ✕
                 </button>
             </div>
         `)
         .join('');
+}
+
+function handleMembersListClick(event) {
+    const removeButton = event.target.closest('.btn-remove[data-member-index]');
+    if (!removeButton || !dom.membersList.contains(removeButton)) return;
+
+    const index = Number(removeButton.dataset.memberIndex);
+    if (!Number.isInteger(index) || index < 0 || index >= state.members.length) return;
+
+    removeMember(index);
 }
 
 function showToast(message, type = 'info') {
@@ -309,6 +319,9 @@ function getTeamErrorMessage(error) {
     }
     if (msg.includes('member count')) {
         return 'Teams must have between 1 and 6 members.';
+    }
+    if (msg.includes('row-level security') || msg.includes('violates row-level security policy')) {
+        return 'Submission is temporarily unavailable. Please try again in a moment.';
     }
 
     if (code === '23505' || msg.includes('unique') || msg.includes('duplicate')) {
@@ -407,6 +420,7 @@ function initEventListeners() {
     });
 
     dom.addMemberBtn.addEventListener('click', addMember);
+    dom.membersList.addEventListener('click', handleMembersListClick);
     dom.memberInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();

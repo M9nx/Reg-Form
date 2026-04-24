@@ -240,12 +240,22 @@ function renderMembersList() {
         .map((member, i) => `
             <div class="member-item">
                 <span>${escapeHtml(member)}</span>
-                <button type="button" class="btn-remove" onclick="removeMember(${i})">
+                <button type="button" class="btn-remove" data-member-index="${i}" aria-label="Remove member ${i + 1}">
                     ✕
                 </button>
             </div>
         `)
         .join('');
+}
+
+function handleEditMembersListClick(event) {
+    const removeButton = event.target.closest('.btn-remove[data-member-index]');
+    if (!removeButton || !dom.editMembersList.contains(removeButton)) return;
+
+    const index = Number(removeButton.dataset.memberIndex);
+    if (!Number.isInteger(index) || index < 0 || index >= state.members.length) return;
+
+    removeMember(index);
 }
 
 function lockTokenInput(isLocked) {
@@ -302,6 +312,9 @@ function getTeamErrorMessage(error) {
     }
     if (msg.includes('invalid token')) {
         return 'Invalid token. Please check and try again.';
+    }
+    if (msg.includes('row-level security') || msg.includes('violates row-level security policy')) {
+        return 'Request is temporarily unavailable. Please try again in a moment.';
     }
 
     if (code === '23505' || msg.includes('unique') || msg.includes('duplicate')) {
@@ -420,10 +433,9 @@ async function loadTeamForEdit() {
 
     try {
         const { data, error } = await supabaseClient
-            .from('teams')
-            .select('id, team_name, token, team_members(member_name)')
-            .eq('token', token)
-            .single();
+            .rpc('get_team_by_token', {
+                p_token: token
+            });
 
         if (error) throw error;
 
@@ -511,6 +523,7 @@ function initEventListeners() {
     });
 
     dom.editAddMemberBtn.addEventListener('click', addMember);
+    dom.editMembersList.addEventListener('click', handleEditMembersListClick);
     dom.editMemberInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
