@@ -6,6 +6,7 @@
 // SUPABASE CONFIG
 // ============================================
 const SUPABASE_URL = 'https://flqtbpynxiwpcydszxov.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZscXRicHlueGl3cGN5ZHN6eG92Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzNDI2MzAsImV4cCI6MjA4NjkxODYzMH0.hz4OE0Np2i8k1p1LR25TXRvbvrUuNtjxnLOh5MfcsBw';
 
 const ROUTES = Object.freeze({
     registration: 'index.html',
@@ -34,6 +35,7 @@ const dom = {
 };
 
 let adminClient = null;
+const publicClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let state = {
     teams: [],
@@ -79,6 +81,28 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+function parseJwtPayload(token) {
+    if (!token || typeof token !== 'string') return null;
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+
+    try {
+        const payload = parts[1]
+            .replace(/-/g, '+')
+            .replace(/_/g, '/');
+        const pad = payload.length % 4;
+        const normalized = pad ? payload + '='.repeat(4 - pad) : payload;
+        return JSON.parse(atob(normalized));
+    } catch {
+        return null;
+    }
+}
+
+function getApiKeyRole(token) {
+    const payload = parseJwtPayload(token);
+    return String(payload?.role || '').toLowerCase();
+}
+
 async function sha256Hex(value) {
     const encoded = new TextEncoder().encode(value);
     const digest = await window.crypto.subtle.digest('SHA-256', encoded);
@@ -87,24 +111,27 @@ async function sha256Hex(value) {
         .join('');
 }
 
-async function isValidAdminPassword(client, value) {
-    if (!value || !client) return false;
+async function isValidAdminPassword(value) {
+    if (!value) return false;
+    const passwordHash = await sha256Hex(value);
 
-    const { data, error } = await client
-        .from('passwords')
-        .select('password_hash')
-        .eq('id', 1)
-        .single();
+    const { data, error } = await publicClient.rpc('verify_admin_password_hash', {
+        p_password_hash: passwordHash
+    });
 
     if (error) {
+        const msg = String(error?.message || '');
+        if (msg.includes('Could not find the function')) {
+            const legacy = await publicClient.rpc('verify_admin_password', {
+                p_password: value
+            });
+            if (legacy.error) throw legacy.error;
+            return Boolean(legacy.data);
+        }
         throw error;
     }
 
-    const expectedHash = String(data?.password_hash || '').trim().toLowerCase();
-    if (!expectedHash) return false;
-
-    const providedHash = (await sha256Hex(value)).toLowerCase();
-    return providedHash === expectedHash;
+    return Boolean(data);
 }
 
 function applyNamedRoutes() {
@@ -163,14 +190,17 @@ async function connect() {
         return;
     }
 
+    const keyRole = getApiKeyRole(serviceKey);
+    if (keyRole !== 'service_role') {
+        showToast('Please use the Supabase service_role key (not anon key)', 'error');
+        return;
+    }
+
     setButtonLoading(dom.connectBtn, true);
 
     try {
-        adminClient = window.supabase.createClient(SUPABASE_URL, serviceKey);
-
-        const passwordOk = await isValidAdminPassword(adminClient, adminPassword);
+        const passwordOk = await isValidAdminPassword(adminPassword);
         if (!passwordOk) {
-            adminClient = null;
             if (dom.adminPasswordInput) {
                 dom.adminPasswordInput.value = '';
                 dom.adminPasswordInput.focus();
@@ -178,6 +208,8 @@ async function connect() {
             showToast('Invalid admin password', 'error');
             return;
         }
+
+        adminClient = window.supabase.createClient(SUPABASE_URL, serviceKey);
 
         const { error } = await adminClient
             .from('teams')
@@ -192,7 +224,12 @@ async function connect() {
         showToast('Connected successfully', 'success');
     } catch (error) {
         console.error('Connect error:', error);
-        showToast('Connection failed: ' + (error?.message || 'Unknown error'), 'error');
+        const message = String(error?.message || 'Unknown error');
+        if (message.includes('Could not find the function')) {
+            showToast('Connection failed: run supabase db push, then refresh page', 'error');
+            return;
+        }
+        showToast('Connection failed: ' + message, 'error');
     } finally {
         setButtonLoading(dom.connectBtn, false);
     }
