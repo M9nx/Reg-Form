@@ -6,7 +6,6 @@
 // SUPABASE CONFIG
 // ============================================
 const SUPABASE_URL = 'https://flqtbpynxiwpcydszxov.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZscXRicHlueGl3cGN5ZHN6eG92Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzNDI2MzAsImV4cCI6MjA4NjkxODYzMH0.hz4OE0Np2i8k1p1LR25TXRvbvrUuNtjxnLOh5MfcsBw';
 
 const ROUTES = Object.freeze({
     registration: 'index.html',
@@ -35,7 +34,6 @@ const dom = {
 };
 
 let adminClient = null;
-const publicClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let state = {
     teams: [],
@@ -81,23 +79,32 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-async function isValidAdminPassword(value) {
-    if (!value) return false;
-    try {
-        const { data, error } = await publicClient.rpc('verify_admin_password', {
-            p_password: value
-        });
+async function sha256Hex(value) {
+    const encoded = new TextEncoder().encode(value);
+    const digest = await window.crypto.subtle.digest('SHA-256', encoded);
+    return Array.from(new Uint8Array(digest))
+        .map(byte => byte.toString(16).padStart(2, '0'))
+        .join('');
+}
 
-        if (error) {
-            console.error('Password verification RPC error:', error);
-            return false;
-        }
+async function isValidAdminPassword(client, value) {
+    if (!value || !client) return false;
 
-        return Boolean(data);
-    } catch (error) {
-        console.error('Password verification failed:', error);
-        return false;
+    const { data, error } = await client
+        .from('passwords')
+        .select('password_hash')
+        .eq('id', 1)
+        .single();
+
+    if (error) {
+        throw error;
     }
+
+    const expectedHash = String(data?.password_hash || '').trim().toLowerCase();
+    if (!expectedHash) return false;
+
+    const providedHash = (await sha256Hex(value)).toLowerCase();
+    return providedHash === expectedHash;
 }
 
 function applyNamedRoutes() {
@@ -150,16 +157,6 @@ async function connect() {
         return;
     }
 
-    const passwordOk = await isValidAdminPassword(adminPassword);
-    if (!passwordOk) {
-        if (dom.adminPasswordInput) {
-            dom.adminPasswordInput.value = '';
-            dom.adminPasswordInput.focus();
-        }
-        showToast('Invalid admin password', 'error');
-        return;
-    }
-
     const serviceKey = dom.serviceKeyInput.value.trim();
     if (!serviceKey) {
         showToast('Please enter the service role key', 'error');
@@ -170,6 +167,17 @@ async function connect() {
 
     try {
         adminClient = window.supabase.createClient(SUPABASE_URL, serviceKey);
+
+        const passwordOk = await isValidAdminPassword(adminClient, adminPassword);
+        if (!passwordOk) {
+            adminClient = null;
+            if (dom.adminPasswordInput) {
+                dom.adminPasswordInput.value = '';
+                dom.adminPasswordInput.focus();
+            }
+            showToast('Invalid admin password', 'error');
+            return;
+        }
 
         const { error } = await adminClient
             .from('teams')
