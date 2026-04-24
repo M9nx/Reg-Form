@@ -330,7 +330,7 @@ function formatTimestamp(timestamp) {
 function saveSubmission(details) {
     if (!details || !details.token) return;
     try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(details));
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(details));
     } catch (error) {
         console.warn('Failed to save submission session:', error);
     }
@@ -338,7 +338,7 @@ function saveSubmission(details) {
 
 function loadSavedSubmission() {
     try {
-        const raw = localStorage.getItem(STORAGE_KEY);
+        const raw = sessionStorage.getItem(STORAGE_KEY);
         if (!raw) return null;
         const parsed = JSON.parse(raw);
         if (!parsed || typeof parsed !== 'object') return null;
@@ -347,7 +347,7 @@ function loadSavedSubmission() {
     } catch (error) {
         console.warn('Failed to load submission session:', error);
         try {
-            localStorage.removeItem(STORAGE_KEY);
+            sessionStorage.removeItem(STORAGE_KEY);
         } catch (removeError) {
             console.warn('Failed to clear submission session:', removeError);
         }
