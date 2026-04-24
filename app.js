@@ -20,7 +20,7 @@ let state = {
     isLoading: false,
     members: [],
     maxMembers: 6,
-    minMembers: 1
+    minMembers: 5
 };
 
 // ============================================
