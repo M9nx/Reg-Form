@@ -6,6 +6,13 @@
 // SUPABASE CONFIG
 // ============================================
 const SUPABASE_URL = 'https://flqtbpynxiwpcydszxov.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZscXRicHlueGl3cGN5ZHN6eG92Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzNDI2MzAsImV4cCI6MjA4NjkxODYzMH0.hz4OE0Np2i8k1p1LR25TXRvbvrUuNtjxnLOh5MfcsBw';
+
+const ROUTES = Object.freeze({
+    registration: 'index.html',
+    edit: 'edit.html',
+    admin: 'admin.html'
+});
 
 // ============================================
 // DOM
@@ -15,6 +22,7 @@ const $ = id => document.getElementById(id);
 const dom = {
     authSection: $('auth-section'),
     dashboardSection: $('dashboard-section'),
+    adminPasswordInput: $('admin-password'),
     serviceKeyInput: $('service-key'),
     connectBtn: $('connect-btn'),
     refreshBtn: $('refresh-btn'),
@@ -27,6 +35,8 @@ const dom = {
 };
 
 let adminClient = null;
+const publicClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 let state = {
     teams: [],
     isLoading: false
@@ -71,6 +81,36 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+async function isValidAdminPassword(value) {
+    if (!value) return false;
+    try {
+        const { data, error } = await publicClient.rpc('verify_admin_password', {
+            p_password: value
+        });
+
+        if (error) {
+            console.error('Password verification RPC error:', error);
+            return false;
+        }
+
+        return Boolean(data);
+    } catch (error) {
+        console.error('Password verification failed:', error);
+        return false;
+    }
+}
+
+function applyNamedRoutes() {
+    document.querySelectorAll('[data-route-name]').forEach((el) => {
+        const routeName = el.dataset.routeName;
+        const target = ROUTES[routeName];
+        if (!target) return;
+        if (el.tagName === 'A') {
+            el.setAttribute('href', target);
+        }
+    });
+}
+
 function updateStats() {
     const totalTeams = state.teams.length;
     const totalMembers = state.teams.reduce((sum, team) => {
@@ -104,6 +144,22 @@ function renderTable() {
 // API CALLS
 // ============================================
 async function connect() {
+    const adminPassword = (dom.adminPasswordInput?.value || '').trim();
+    if (!adminPassword) {
+        showToast('Please enter the admin password', 'error');
+        return;
+    }
+
+    const passwordOk = await isValidAdminPassword(adminPassword);
+    if (!passwordOk) {
+        if (dom.adminPasswordInput) {
+            dom.adminPasswordInput.value = '';
+            dom.adminPasswordInput.focus();
+        }
+        showToast('Invalid admin password', 'error');
+        return;
+    }
+
     const serviceKey = dom.serviceKeyInput.value.trim();
     if (!serviceKey) {
         showToast('Please enter the service role key', 'error');
@@ -198,6 +254,7 @@ async function exportCSV() {
 function disconnect() {
     adminClient = null;
     state.teams = [];
+    if (dom.adminPasswordInput) dom.adminPasswordInput.value = '';
     dom.serviceKeyInput.value = '';
     dom.dashboardSection.classList.add('hidden');
     dom.authSection.classList.remove('hidden');
@@ -207,10 +264,14 @@ function disconnect() {
 // EVENT LISTENERS
 // ============================================
 function init() {
+    applyNamedRoutes();
     dom.connectBtn.addEventListener('click', connect);
     dom.refreshBtn.addEventListener('click', loadData);
     dom.exportBtn.addEventListener('click', exportCSV);
     dom.disconnectBtn.addEventListener('click', disconnect);
+    dom.adminPasswordInput?.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') connect();
+    });
     dom.serviceKeyInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') connect();
     });
