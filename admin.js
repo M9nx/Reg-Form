@@ -103,6 +103,37 @@ function getApiKeyRole(token) {
     return String(payload?.role || '').toLowerCase();
 }
 
+function validateServiceKey(serviceKey) {
+    const normalized = String(serviceKey || '').trim();
+    const role = getApiKeyRole(normalized);
+
+    if (role === 'anon') {
+        return {
+            valid: false,
+            message: 'Please use the Supabase service_role key (not anon key)'
+        };
+    }
+
+    if (role === 'service_role') {
+        return { valid: true };
+    }
+
+    const lower = normalized.toLowerCase();
+    if (lower.startsWith('sb_publishable_')) {
+        return {
+            valid: false,
+            message: 'Please use the Supabase service_role key (not publishable key)'
+        };
+    }
+
+    if (lower.startsWith('sb_secret_')) {
+        return { valid: true };
+    }
+
+    // Unknown formats are allowed here and validated by actual API access.
+    return { valid: true };
+}
+
 async function sha256Hex(value) {
     const encoded = new TextEncoder().encode(value);
     const digest = await window.crypto.subtle.digest('SHA-256', encoded);
@@ -113,6 +144,15 @@ async function sha256Hex(value) {
 
 async function isValidAdminPassword(value) {
     if (!value) return false;
+
+    if (!window.crypto?.subtle) {
+        const legacy = await publicClient.rpc('verify_admin_password', {
+            p_password: value
+        });
+        if (legacy.error) throw legacy.error;
+        return Boolean(legacy.data);
+    }
+
     const passwordHash = await sha256Hex(value);
 
     const { data, error } = await publicClient.rpc('verify_admin_password_hash', {
@@ -120,8 +160,9 @@ async function isValidAdminPassword(value) {
     });
 
     if (error) {
+        const code = String(error?.code || '');
         const msg = String(error?.message || '');
-        if (msg.includes('Could not find the function')) {
+        if (code === '42883' || msg.includes('Could not find the function')) {
             const legacy = await publicClient.rpc('verify_admin_password', {
                 p_password: value
             });
@@ -190,9 +231,9 @@ async function connect() {
         return;
     }
 
-    const keyRole = getApiKeyRole(serviceKey);
-    if (keyRole !== 'service_role') {
-        showToast('Please use the Supabase service_role key (not anon key)', 'error');
+    const keyValidation = validateServiceKey(serviceKey);
+    if (!keyValidation.valid) {
+        showToast(keyValidation.message, 'error');
         return;
     }
 
@@ -227,6 +268,10 @@ async function connect() {
         const message = String(error?.message || 'Unknown error');
         if (message.includes('Could not find the function')) {
             showToast('Connection failed: run supabase db push, then refresh page', 'error');
+            return;
+        }
+        if (message.toLowerCase().includes('permission denied')) {
+            showToast('Connection failed: service role key is invalid or missing permissions', 'error');
             return;
         }
         showToast('Connection failed: ' + message, 'error');
